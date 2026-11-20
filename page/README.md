@@ -13,9 +13,11 @@ Rebuilt with `python3 tools/build_assets.py [figs|hero|compare|cf|sim]` on the h
 - `videos/hero-*.mp4` — action video and EgoSpace rollout of HOT3D clip-001973_69-149 (physca_cf roots/orig, rollouts/physca/orig).
 - `videos/compare-*.mp4` — Fig. 3 clips (clip-003335_0-80, clip-002966_69-149, subject3_ego__o1__5_0-80), 4x2 grid:
   first frame | real | EgoSpace | EgoHOI / Uni3C | EgoSim | GR | JCV (paths from `manuscript/fig/fig_3_src/srcs2.py`).
-- `videos/cf-{withdraw,reroute}.mp4` — the project video's counterfactual units (= teaser units): withdraw clip-001998_0-80
-  vs EgoSim, reroute clip-002054_69-149 vs JCV; edited action | baseline | EgoSpace at 480 px per cell, same crops,
-  cyan commanded-hand outline + violet SAM 3 object outline. Posters are the teaser frames (56 / 68).
+- `videos/cf-withdraw-clip-{002838,001995,001918,001998}.mp4`, `videos/cf-reroute.mp4` — counterfactual clips (`CF_CLIPS` in
+  build_assets.py): edited action | baseline | EgoSpace, 480 px per cell, cyan hand + violet SAM 3 object outline, labels burned
+  in. 002838 vs JCV uses a thin object outline and a 'picks up the wrong object' tag. 001995 vs EgoHOI outlines EgoHOI's own
+  hands (its SAM 3 hand mask) instead of the commanded hand. The reroute clip (clip-002054_69-149 vs JCV) and 001998 are
+  shared with the project video.
 - `videos/sim-clip-{002301,002140}.mp4` — Fig. 4 simulation units: ProxyPose RGB crops (real / EgoSpace / EgoHOI) over
   SPIDER rollouts (GT labels / EgoSpace / EgoHOI). The SPIDER frame sequences are rendered in `jc-con` with
   `tools/sim_render/run.sh` (copy `render_seq.py` to /tmp/egospace_render_seq.py), then pulled out to `tools/sim_render/frames/<clip>_0-80/<method>/` (or pass `SIM_FRAMES`).

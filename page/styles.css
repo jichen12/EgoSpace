@@ -94,7 +94,7 @@ a:hover{text-decoration:underline}
 .grid-labels .tick{background:var(--tick)}.grid-labels .cross{background:var(--cross)}
 .cf-block{margin-bottom:1.5em}
 .cf-title{color:#787878;font-size:.95em;margin-bottom:.4em}
-.cf-block .grid-video{margin-bottom:0}
+.cf-block .grid-video{margin-bottom:.6em}.cf-block .grid-video:last-child{margin-bottom:0}
 .legend-row{display:flex;flex-wrap:wrap;gap:.4em 1.6em;margin:0 0 1em;font-size:.8em;line-height:1.5}
 .legend-row .swatch{display:inline-block;width:1.6em;height:.35em;margin-right:.45em;vertical-align:middle}
 .swatch.cyan{background:#28d7f5}.swatch.violet{background:#963cff}

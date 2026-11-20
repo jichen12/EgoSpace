@@ -7,8 +7,8 @@ Sources (all local, see README in this folder):
   hero     action video + EgoSpace rollout of clip-001973_69-149 (physca_cf roots/orig, rollouts/physca/orig)
   compare  the fig. 3 clips, 8-cell grid: first frame | real | EgoSpace | EgoHOI / Uni3C | EgoSim | GR | JCV
            (paths from manuscript/fig/fig_3_src/srcs2.py)
-  cf       the project video's counterfactual units (= teaser units): withdraw clip-001998_0-80 vs EgoSim,
-           reroute clip-002054_69-149 vs JCV; edited action | baseline | EgoSpace, cyan hand + violet SAM 3 object outline
+  cf       counterfactual clips (CF_CLIPS): four withdraw units + the reroute unit clip-002054_69-149 vs JCV;
+           edited action | baseline | EgoSpace, cyan hand + violet SAM 3 object outline, labels burned in
   sim      SPIDER sequences rendered by tools/sim_render (jc-con) + ProxyPose RGB crops, 3x2 grid
 """
 import json, os, subprocess, sys
@@ -121,12 +121,47 @@ def edge(m, w=5):
     return (np.asarray(im.filter(ImageFilter.MaxFilter(w))) > 127) & ~(np.asarray(im.filter(ImageFilter.MinFilter(w))) > 127)
 
 
-def cf():
-    """Same units, crops and drawing as the project video's counterfactual scene (tools/video/cf_seq.py, scenes_more.py):
-    edited action | baseline | EgoSpace, 480 px cells, cyan commanded-hand outline + violet SAM 3 object outline."""
-    S = 480
-    units = [('withdraw', 'clip-001998_0-80', 'egosim', (40, 80, 440, 480)),
-             ('reroute', 'clip-002054_69-149', 'jcv', (110, 40, 470, 400))]
+ACCENT, TICK, CROSS = (23, 90, 158), (46, 157, 87), (214, 69, 61)
+_LBL_FONT = '/usr/share/fonts/opentype/urw-base35/NimbusSans-Bold.otf'
+
+
+def label(frame, text, verdict=None, ours=False, color=None, bottom=False):
+    """Burn a page-style label into the top-left of a cell: dark chip (accent chip for ours) + green check / red cross."""
+    from PIL import ImageDraw, ImageFont
+    S = 3                                                  # draw at 3x, then downsample the label patch for smooth edges
+    im = Image.fromarray(np.asarray(frame).astype(np.uint8))
+    px = max(14, round(im.width * 0.042)) * S
+    fnt = ImageFont.truetype(_LBL_FONT, px)
+    tw = fnt.getlength(text); h = int(px * 1.55)
+    w = int(tw + px * 0.7 + (h + px * 0.1 if verdict is not None else 0))
+    patch = Image.new('RGBA', (w, h), (0, 0, 0, 0)); dr = ImageDraw.Draw(patch)
+    fill = (tuple(color) + (235,)) if color is not None else ((ACCENT + (235,)) if ours else (0, 0, 0, 175))
+    dr.rounded_rectangle([0, 0, w - 1, h - 1], int(px * 0.25), fill=fill)
+    dr.text((px * 0.35, h / 2), text, font=fnt, fill=(255, 255, 255, 255), anchor='lm')
+    if verdict is not None:
+        cx, cy, rr = w - h / 2 - px * 0.12, h / 2, h * 0.36
+        dr.ellipse([cx - rr, cy - rr, cx + rr, cy + rr], fill=(TICK if verdict else CROSS) + (255,))
+        lw = max(2, int(rr * 0.24))
+        if verdict:
+            dr.line([(cx - rr * .45, cy + rr * .02), (cx - rr * .12, cy + rr * .36), (cx + rr * .48, cy - rr * .34)], fill='white', width=lw, joint='curve')
+        else:
+            q = rr * .38
+            dr.line([(cx - q, cy - q), (cx + q, cy + q)], fill='white', width=lw); dr.line([(cx - q, cy + q), (cx + q, cy - q)], fill='white', width=lw)
+    patch = patch.resize((w // S, h // S), Image.LANCZOS)
+    m = max(6, im.width // 60)
+    im.paste(patch, (m, im.height - patch.height - m) if bottom else (m, m), patch)
+    return np.asarray(im)
+
+
+NAMES = {'egosim': 'EgoSim', 'jcv': 'JCV', 'uni3c': 'Uni3C', 'generated_reality': 'GR', 'egohoi': 'EgoHOI'}
+
+
+def cf_clip(cond, u, bmodel, box, path, poster=40, S=480, obj_w=9, tag=None, base_hands=False):
+    """edited action | baseline | EgoSpace for one counterfactual unit; cyan commanded-hand outline, violet SAM 3
+    object outline, labels burned in (baseline ✗, EgoSpace ✓). box = crop in the 480 px frame (None = full frame).
+    obj_w: object outline width; tag: extra red note at the bottom of the baseline cell;
+    base_hands: outline the baseline's own generated hands (its SAM 3 hand mask) instead of the commanded hand."""
+    box = box or (0, 0, 480, 480)
 
     def lum(x): return x @ np.array([0.299, 0.587, 0.114])
 
@@ -135,37 +170,62 @@ def cf():
         y2 = np.interp(y, np.percentile(y, q), np.percentile(yr, q))
         return (im * (y2 / np.maximum(y, 1))[..., None]).clip(0, 255)
 
-    def up(m, box):
+    def up(m):
         return np.asarray(Image.fromarray(m.astype(np.uint8) * 255).crop(box).resize((S, S), Image.BILINEAR)) > 127
 
-    for cond, u, bmodel, box in units:
-        clip, iv = u.split('_')
-        act = read(P / f'roots/{cond}/{u}/{clip}/hand_view_render/render_hand_{iv}.mp4', 480)
-        scn = read(P / f'downloads/hot3d_prep_all/{clip}/view_render_old/render_{iv}.mp4', 480)
-        ours = read(P / f'rollouts/physca/{cond}/{u}/hot3d/{clip}/{u}_camera_obj_inference.mp4', 480)
-        base = read(P / f'rollouts/{bmodel}/{cond}/{u}/video.mp4', 480)
-        hands = []
-        for a_, b_ in zip(act, scn):
-            hm = Image.fromarray(((np.abs(a_.astype(int) - b_.astype(int)).sum(2) > 45) * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(5))
-            hands.append(edge(up(np.asarray(hm.filter(ImageFilter.MinFilter(7)).filter(ImageFilter.MaxFilter(7))) > 127, box), 7))
-        crop = lambda f: np.asarray(Image.fromarray(np.asarray(f).clip(0, 255).astype(np.uint8)).crop(box).resize((S, S), Image.LANCZOS))
-        cells = [[crop(a_) for a_ in act]]
-        for m, fr in ((bmodel, base), ('physca', ours)):
-            root = {'physca': 'recon2d', 'jcv': 'recon2d_jcv'}.get(m, 'recon2d_baselines')
-            d = np.load(P / root / 'work' / f'{m}__{cond}__{u}' / 'masks.npz', allow_pickle=True)
-            obj = np.unpackbits(d['obj'], axis=2)[..., :480].astype(bool)
-            out = []
-            for t, f in enumerate(fr):
-                im = f.astype(float)
-                if m == 'egosim': im = match_brightness(im, ours[t].astype(float))
-                im = crop(im).copy()
-                if t < len(obj) and obj[t].any():
-                    im[edge(up(obj[t], box), 9)] = VIOLET
-                if t < len(hands):
-                    im[hands[t]] = CYAN
-                out.append(im)
-            cells.append(out)
-        write(grid(cells, 3), VID / f'cf-{cond}.mp4', crf=18, poster=56 if cond == 'withdraw' else 68)
+    clip, iv = u.split('_')
+    act = read(P / f'roots/{cond}/{u}/{clip}/hand_view_render/render_hand_{iv}.mp4', 480)
+    scn = read(P / f'downloads/hot3d_prep_all/{clip}/view_render_old/render_{iv}.mp4', 480)
+    ours = read(P / f'rollouts/physca/{cond}/{u}/hot3d/{clip}/{u}_camera_obj_inference.mp4', 480)
+    bpath = (P / f'rollouts/egohoi/{cond}/{u}/hot3d/{clip}/{u}_camera_hand_obj_inference.mp4' if bmodel == 'egohoi'
+             else P / f'rollouts/{bmodel}/{cond}/{u}/video.mp4')
+    base = read(bpath, 480)
+    hands = []
+    for a_, b_ in zip(act, scn):
+        hm = Image.fromarray(((np.abs(a_.astype(int) - b_.astype(int)).sum(2) > 45) * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(5))
+        hands.append(edge(up(np.asarray(hm.filter(ImageFilter.MinFilter(7)).filter(ImageFilter.MaxFilter(7))) > 127), 7))
+    crop = lambda f: np.asarray(Image.fromarray(np.asarray(f).clip(0, 255).astype(np.uint8)).crop(box).resize((S, S), Image.LANCZOS))
+    cells = [[label(crop(a_), 'Edited action') for a_ in act]]
+    for m, fr in ((bmodel, base), ('physca', ours)):
+        root = {'physca': 'recon2d', 'egohoi': 'recon2d', 'jcv': 'recon2d_jcv'}.get(m, 'recon2d_baselines')
+        d = np.load(P / root / 'work' / f'{m}__{cond}__{u}' / 'masks.npz', allow_pickle=True)
+        obj = np.unpackbits(d['obj'], axis=2)[..., :480].astype(bool)
+        own = np.unpackbits(d['hands'], axis=2)[..., :480].astype(bool) if (base_hands and m != 'physca') else None
+        out = []
+        for t, f in enumerate(fr):
+            im = f.astype(float)
+            if m == 'egosim': im = match_brightness(im, ours[t].astype(float))
+            im = crop(im).copy()
+            if t < len(obj) and obj[t].any():
+                im[edge(up(obj[t]), obj_w)] = VIOLET
+            if own is not None:
+                if t < len(own): im[edge(up(own[t]), 7)] = CYAN
+            elif t < len(hands):
+                im[hands[t]] = CYAN
+            if m == 'physca':
+                im = label(im, 'EgoSpace', True, ours=True)
+            else:
+                im = label(im, NAMES[m], False)
+                if tag: im = label(im, tag, color=CROSS, bottom=True)
+            out.append(im)
+        cells.append(out)
+    write(grid(cells, 3), path, crf=18, poster=poster)
+
+
+# page clips: (file, cond, unit, baseline, crop box, poster frame, options). Withdraw picks: user review 2026-11-19
+CF_CLIPS = [
+    ('cf-withdraw-clip-002838', 'withdraw', 'clip-002838_30-110', 'jcv', None, 64, dict(obj_w=3, tag='picks up the wrong object')),
+    ('cf-withdraw-clip-001995', 'withdraw', 'clip-001995_69-149', 'egohoi', None, 64, dict(base_hands=True)),
+    ('cf-withdraw-clip-001918', 'withdraw', 'clip-001918_60-140', 'jcv', None, 64, {}),
+    ('cf-withdraw-clip-001998', 'withdraw', 'clip-001998_0-80', 'egosim', None, 56, {}),
+    ('cf-reroute', 'reroute', 'clip-002054_69-149', 'jcv', (110, 40, 470, 400), 68, {}),
+]
+
+
+def cf():
+    """Page counterfactual clips (the reroute unit and clip-001998 are shared with the project video)."""
+    for name, cond, u, b, box, poster, opt in CF_CLIPS:
+        cf_clip(cond, u, b, box, VID / f'{name}.mp4', poster, **opt)
 
 
 # ---------------------------------------------------------------- simulation
