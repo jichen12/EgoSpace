@@ -156,7 +156,7 @@ def label(frame, text, verdict=None, ours=False, color=None, bottom=False):
 NAMES = {'egosim': 'EgoSim', 'jcv': 'JCV', 'uni3c': 'Uni3C', 'generated_reality': 'GR', 'egohoi': 'EgoHOI'}
 
 
-def cf_clip(cond, u, bmodel, box, path, poster=40, S=480, obj_w=9, tag=None, base_hands=False):
+def cf_clip(cond, u, bmodel, box, path, poster=40, S=480, obj_w=9, tag=None, base_hands=False, base_name='Baseline'):
     """edited action | baseline | EgoSpace for one counterfactual unit; cyan commanded-hand outline, violet SAM 3
     object outline, labels burned in (baseline ✗, EgoSpace ✓). box = crop in the 480 px frame (None = full frame).
     obj_w: object outline width; tag: extra red note at the bottom of the baseline cell;
@@ -205,19 +205,18 @@ def cf_clip(cond, u, bmodel, box, path, poster=40, S=480, obj_w=9, tag=None, bas
             if m == 'physca':
                 im = label(im, 'EgoSpace', True, ours=True)
             else:
-                im = label(im, NAMES[m], False)
+                im = label(im, base_name or NAMES[m], False)
                 if tag: im = label(im, tag, color=CROSS, bottom=True)
             out.append(im)
         cells.append(out)
     write(grid(cells, 3), path, crf=18, poster=poster)
 
 
-# page clips: (file, cond, unit, baseline, crop box, poster frame, options). Withdraw picks: user review 2026-11-19
+# page clips: (file, cond, unit, baseline, crop box, poster frame, options). Withdraw picks: user review 2026-11-19;
+# the baseline cell is labelled just 'Baseline' (user request), not the method name
 CF_CLIPS = [
-    ('cf-withdraw-clip-002838', 'withdraw', 'clip-002838_30-110', 'jcv', None, 64, dict(obj_w=3, tag='picks up the wrong object')),
     ('cf-withdraw-clip-001995', 'withdraw', 'clip-001995_69-149', 'egohoi', None, 64, dict(base_hands=True)),
     ('cf-withdraw-clip-001918', 'withdraw', 'clip-001918_60-140', 'jcv', None, 64, {}),
-    ('cf-withdraw-clip-001998', 'withdraw', 'clip-001998_0-80', 'egosim', None, 56, {}),
     ('cf-reroute', 'reroute', 'clip-002054_69-149', 'jcv', (110, 40, 470, 400), 68, {}),
 ]
 
