@@ -14,7 +14,9 @@ Rebuilt with `python3 tools/build_assets.py [figs|hero|compare|cf|sim]` on the h
 - `videos/compare-*.mp4` — Fig. 3 clips (clip-003335_0-80, clip-002966_69-149, subject3_ego__o1__5_0-80), 4x2 grid:
   first frame | real | EgoSpace | EgoHOI / Uni3C | EgoSim | GR | JCV (paths from `manuscript/fig/fig_3_src/srcs2.py`).
 - `videos/cf-withdraw-clip-{001995,001918}.mp4`, `videos/cf-reroute.mp4` — counterfactual clips (`CF_CLIPS` in
-  build_assets.py): edited action | baseline | EgoSpace, 480 px per cell, cyan hand + violet SAM 3 object outline, labels burned
+  build_assets.py): real video (GT) | EgoSpace | baseline with the edited action as a top-right inset, 480 px per cell; top strip = the edit and its implication,
+  bottom strip = original action / follows the edit / ignores the edit (CAP_WITHDRAW, CAP_REROUTE)
+  cyan hand + violet SAM 3 object outline, labels burned
   in. The baseline cell is labelled 'Baseline' (001995: EgoHOI, outlined with EgoHOI's own SAM 3 hand mask; 001918 and the
   reroute clip clip-002054_69-149: JCV).
 - `videos/sim-clip-{002301,002140}.mp4` — Fig. 4 simulation units: ProxyPose RGB crops (real / EgoSpace / EgoHOI) over

@@ -125,12 +125,11 @@ ACCENT, TICK, CROSS = (23, 90, 158), (46, 157, 87), (214, 69, 61)
 _LBL_FONT = '/usr/share/fonts/opentype/urw-base35/NimbusSans-Bold.otf'
 
 
-def label(frame, text, verdict=None, ours=False, color=None, bottom=False):
-    """Burn a page-style label into the top-left of a cell: dark chip (accent chip for ours) + green check / red cross."""
+def make_chip(text, verdict=None, ours=False, color=None, px=20):
+    """RGBA label chip in the page style (dark / accent / given colour), optional green check or red cross."""
     from PIL import ImageDraw, ImageFont
-    S = 3                                                  # draw at 3x, then downsample the label patch for smooth edges
-    im = Image.fromarray(np.asarray(frame).astype(np.uint8))
-    px = max(14, round(im.width * 0.042)) * S
+    S = 3                                                  # draw at 3x, then downsample for smooth edges
+    px = int(px * S)
     fnt = ImageFont.truetype(_LBL_FONT, px)
     tw = fnt.getlength(text); h = int(px * 1.55)
     w = int(tw + px * 0.7 + (h + px * 0.1 if verdict is not None else 0))
@@ -147,20 +146,90 @@ def label(frame, text, verdict=None, ours=False, color=None, bottom=False):
         else:
             q = rr * .38
             dr.line([(cx - q, cy - q), (cx + q, cy + q)], fill='white', width=lw); dr.line([(cx - q, cy + q), (cx + q, cy - q)], fill='white', width=lw)
-    patch = patch.resize((w // S, h // S), Image.LANCZOS)
+    return patch.resize((w // S, h // S), Image.LANCZOS)
+
+
+def label(frame, text, verdict=None, ours=False, color=None, bottom=False):
+    """Burn a chip into the top-left (or bottom-left) corner of a cell."""
+    im = Image.fromarray(np.asarray(frame).astype(np.uint8))
+    patch = make_chip(text, verdict, ours, color, px=max(14, round(im.width * 0.042)))
     m = max(6, im.width // 60)
     im.paste(patch, (m, im.height - patch.height - m) if bottom else (m, m), patch)
+    return np.asarray(im)
+
+
+def inset(frame, small, note=None, frac=0.36, border=None):
+    """Picture-in-picture: `small` (the edited action) in the top-right corner, labelled, with an optional note below."""
+    im = Image.fromarray(np.asarray(frame).astype(np.uint8))
+    W_ = im.width; s = int(W_ * frac); m = max(6, W_ // 60); bw = 3
+    sm = Image.fromarray(np.asarray(small).astype(np.uint8)).resize((s, s), Image.LANCZOS)
+    sm = label(sm, 'Edited action (input)')                 # chip scaled to the inset
+    box = Image.new('RGB', (s + 2 * bw, s + 2 * bw), tuple(border) if border else (255, 255, 255))
+    box.paste(Image.fromarray(np.asarray(sm)), (bw, bw))
+    x0 = W_ - box.width - m
+    im.paste(box, (x0, m))
+    if note:
+        ch = make_chip(note, color=ORANGE, px=max(12, round(W_ * 0.03)))
+        im.paste(ch, (W_ - ch.width - m, m + box.height + 4), ch)
     return np.asarray(im)
 
 
 NAMES = {'egosim': 'EgoSim', 'jcv': 'JCV', 'uni3c': 'Uni3C', 'generated_reality': 'GR', 'egohoi': 'EgoHOI'}
 
 
-def cf_clip(cond, u, bmodel, box, path, poster=40, S=480, obj_w=9, tag=None, base_hands=False, base_name='Baseline'):
+ORANGE = (232, 128, 40)
+
+
+def cf_strip(width, height, parts, bg=(255, 255, 255), col_w=None):
+    """One caption line: parts = list of (x_center or None, [(text, colour)], icon) centred in their column (None = whole width).
+    icon: None | True (green check) | False (red cross), drawn before the text."""
+    from PIL import ImageDraw, ImageFont
+    S = 3
+    im = Image.new('RGB', (width * S, height * S), bg); dr = ImageDraw.Draw(im)
+    px = int(height * 0.44) * S
+    fb = ImageFont.truetype(_LBL_FONT, px)
+    fr = ImageFont.truetype(_LBL_FONT.replace('-Bold', '-Regular'), px)
+    for xc, runs, icon in parts:
+        avail = ((col_w if xc is not None and col_w else width) - 20) * S
+        p_ = px
+        while True:                                       # shrink this caption until it fits its column
+            fb_ = ImageFont.truetype(_LBL_FONT, p_); fr_ = ImageFont.truetype(_LBL_FONT.replace('-Bold', '-Regular'), p_)
+            fonts = [fb_ if i == 0 or col != (60, 64, 72) else fr_ for i, (t, col) in enumerate(runs)]
+            tw = sum(f.getlength(t) for f, (t, _) in zip(fonts, runs))
+            r = p_ * 0.48; iw = (2 * r + p_ * 0.3) if icon is not None else 0
+            if tw + iw <= avail or p_ < px * 0.6: break
+            p_ = int(p_ * 0.95)
+        x = (xc * S if xc is not None else width * S / 2) - (tw + iw) / 2; y = height * S / 2
+        if icon is not None:
+            cx = x + r; col = TICK if icon else CROSS
+            dr.ellipse([cx - r, y - r, cx + r, y + r], fill=col); lw = max(2, int(r * 0.24))
+            if icon:
+                dr.line([(cx - r * .45, y + r * .02), (cx - r * .12, y + r * .36), (cx + r * .48, y - r * .34)], fill='white', width=lw, joint='curve')
+            else:
+                q = r * .38
+                dr.line([(cx - q, y - q), (cx + q, y + q)], fill='white', width=lw); dr.line([(cx - q, y + q), (cx + q, y - q)], fill='white', width=lw)
+            x += iw
+        px_used = p_
+        for f, (t, col) in zip(fonts, runs):
+            dr.text((x, y), t, font=f, fill=col, anchor='lm'); x += f.getlength(t)
+    return np.asarray(im.resize((width, height), Image.LANCZOS))
+
+
+CF_TAGS = {  # bottom captions: original (real), edit, baseline, EgoSpace
+    'withdraw': ('original: the hand grasps the object', 'edit: the hand stops 5 cm short', 'object moves anyway', 'object stays still'),
+    'reroute': ('original: the hand carries the object', 'edit: the hand is moved 15 cm away', 'object is left behind', 'object follows the hand')}
+
+
+def cf_clip(cond, u, bmodel, box, path, poster=40, S=480, obj_w=9, tag=None, base_hands=False, base_name='Baseline',
+            real=True, t_edit=None, t_resp=None, captions=None):
     """edited action | baseline | EgoSpace for one counterfactual unit; cyan commanded-hand outline, violet SAM 3
     object outline, labels burned in (baseline ✗, EgoSpace ✓). box = crop in the 480 px frame (None = full frame).
     obj_w: object outline width; tag: extra red note at the bottom of the baseline cell;
-    base_hands: outline the baseline's own generated hands (its SAM 3 hand mask) instead of the commanded hand."""
+    base_hands: outline the baseline's own generated hands (its SAM 3 hand mask) instead of the commanded hand.
+    Layout: real video (GT, original action) | EgoSpace | baseline; the edited action is a picture-in-picture in the
+    top-right corner of both rollout cells; the only caption (what the edit does) sits under the EgoSpace column.
+    real: prepend the real recorded video (= the original, unedited action) so the edit is readable;
+    t_edit / t_resp: kept for reference (edit start / visible violation); captions are no longer timed."""
     box = box or (0, 0, 480, 480)
 
     def lum(x): return x @ np.array([0.299, 0.587, 0.114])
@@ -185,8 +254,17 @@ def cf_clip(cond, u, bmodel, box, path, poster=40, S=480, obj_w=9, tag=None, bas
         hm = Image.fromarray(((np.abs(a_.astype(int) - b_.astype(int)).sum(2) > 45) * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(5))
         hands.append(edge(up(np.asarray(hm.filter(ImageFilter.MinFilter(7)).filter(ImageFilter.MaxFilter(7))) > 127), 7))
     crop = lambda f: np.asarray(Image.fromarray(np.asarray(f).clip(0, 255).astype(np.uint8)).crop(box).resize((S, S), Image.LANCZOS))
-    cells = [[label(crop(a_), 'Edited action') for a_ in act]]
-    for m, fr in ((bmodel, base), ('physca', ours)):
+    t0 = int(iv.split('-')[0])
+    tags = CF_TAGS[cond]
+    tag_at = lambda im, t, i, col: label(im, tags[i], color=col, bottom=True) if (t_resp is None or t >= t_resp) else im
+    small = [crop(a_) for a_ in act]
+    edited = lambda t: t_edit is None or t >= t_edit
+    pip = lambda im, t: inset(im, small[t])            # white border, no note (user: one caption only, under EgoSpace)
+    cells = []
+    if real:
+        rv = read(P / f'downloads/hot3d_prep_all/{clip}/{clip}_rgb.mp4', 480, start=t0, n=len(act))
+        cells.append([label(crop(f), 'Real video (GT)') for f in rv])
+    for m, fr in (('physca', ours), (bmodel, base)):
         root = {'physca': 'recon2d', 'egohoi': 'recon2d', 'jcv': 'recon2d_jcv'}.get(m, 'recon2d_baselines')
         d = np.load(P / root / 'work' / f'{m}__{cond}__{u}' / 'masks.npz', allow_pickle=True)
         obj = np.unpackbits(d['obj'], axis=2)[..., :480].astype(bool)
@@ -207,17 +285,33 @@ def cf_clip(cond, u, bmodel, box, path, poster=40, S=480, obj_w=9, tag=None, bas
             else:
                 im = label(im, base_name or NAMES[m], False)
                 if tag: im = label(im, tag, color=CROSS, bottom=True)
-            out.append(im)
+            out.append(pip(im, t) if t < len(small) else im)
         cells.append(out)
-    write(grid(cells, 3), path, crf=18, poster=poster)
+    frames = grid(cells, len(cells))
+    # captions (whole clip): top = the edit and what it implies; bottom = per column, does the rollout follow the edit?
+    Wd = frames[0].shape[1]; col_c = lambda i: i * (S + 4) + S / 2
+    DARK, GREY = (35, 38, 44), (60, 64, 72)
+    cap = captions
+    top = cf_strip(Wd, int(S * 0.12) // 2 * 2, [(None, [('Edited action: ', ORANGE), (cap['edit'], DARK)], None)], bg=(246, 247, 249))
+    bot = cf_strip(Wd, int(S * 0.11) // 2 * 2, [(col_c(0), [('original action: ', GREY), (cap['gt'], GREY)], None),
+                                        (col_c(1), [('follows the edit: ', TICK), (cap['ours'], DARK)], True),
+                                        (col_c(2), [('ignores the edit: ', CROSS), (cap['base'], DARK)], False)], col_w=S)
+    write([np.vstack([top, f, bot]) for f in frames], path, crf=18, poster=poster)
 
 
+# captions: top strip = the edit and what it implies; bottom = per column whether the rollout follows the edit
+CAP_WITHDRAW = dict(edit='the hand now stops 5 cm before the flask instead of grasping it, so the flask should stay still',
+                    gt='the hand grasps the flask', ours='the flask stays still', base='the flask still moves')
+CAP_REROUTE = dict(edit='after grasping the bottle, the hand is moved 15 cm elsewhere, so the bottle should move with the hand',
+                   gt='the hand carries the bottle', ours='the bottle moves along', base='the bottle stays behind')
 # page clips: (file, cond, unit, baseline, crop box, poster frame, options). Withdraw picks: user review 2026-11-19;
 # the baseline cell is labelled just 'Baseline' (user request), not the method name
 CF_CLIPS = [
-    ('cf-withdraw-clip-001995', 'withdraw', 'clip-001995_69-149', 'egohoi', None, 64, dict(base_hands=True)),
-    ('cf-withdraw-clip-001918', 'withdraw', 'clip-001918_60-140', 'jcv', None, 64, {}),
-    ('cf-reroute', 'reroute', 'clip-002054_69-149', 'jcv', (110, 40, 470, 400), 68, {}),
+    # t_edit: edited action leaves the original (withdraw: t_ref - ease frames; reroute: t_start, specs/<unit>/spec.json)
+    # t_resp: baseline violation becomes visible (results2d first_moved / first_detach)
+    ('cf-withdraw-clip-001995', 'withdraw', 'clip-001995_69-149', 'egohoi', None, 66, dict(base_hands=True, t_edit=9, t_resp=44, captions=CAP_WITHDRAW)),
+    ('cf-withdraw-clip-001918', 'withdraw', 'clip-001918_60-140', 'jcv', None, 66, dict(t_edit=3, t_resp=22, captions=CAP_WITHDRAW)),
+    ('cf-reroute', 'reroute', 'clip-002054_69-149', 'jcv', (110, 40, 470, 400), 68, dict(t_edit=28, t_resp=43, captions=CAP_REROUTE)),
 ]
 
 
