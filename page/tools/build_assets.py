@@ -7,8 +7,8 @@ Sources (all local, see README in this folder):
   hero     action video + EgoSpace rollout of clip-001973_69-149 (physca_cf roots/orig, rollouts/physca/orig)
   compare  the fig. 3 clips, 8-cell grid: first frame | real | EgoSpace | EgoHOI / Uni3C | EgoSim | GR | JCV
            (paths from manuscript/fig/fig_3_src/srcs2.py)
-  cf       the counterfactual figure units (withdraw clip-002838_30-110, reroute clip-001881_69-149):
-           edited action | JCV | EgoSim | EgoSpace, cyan commanded-hand outline + violet SAM3 object mask
+  cf       the project video's counterfactual units (= teaser units): withdraw clip-001998_0-80 vs EgoSim,
+           reroute clip-002054_69-149 vs JCV; edited action | baseline | EgoSpace, cyan hand + violet SAM 3 object outline
   sim      SPIDER sequences rendered by tools/sim_render (jc-con) + ProxyPose RGB crops, 3x2 grid
 """
 import json, os, subprocess, sys
@@ -122,33 +122,50 @@ def edge(m, w=5):
 
 
 def cf():
-    for cond, u in [('withdraw', 'clip-002838_30-110'), ('reroute', 'clip-001881_69-149')]:
+    """Same units, crops and drawing as the project video's counterfactual scene (tools/video/cf_seq.py, scenes_more.py):
+    edited action | baseline | EgoSpace, 480 px cells, cyan commanded-hand outline + violet SAM 3 object outline."""
+    S = 480
+    units = [('withdraw', 'clip-001998_0-80', 'egosim', (40, 80, 440, 480)),
+             ('reroute', 'clip-002054_69-149', 'jcv', (110, 40, 470, 400))]
+
+    def lum(x): return x @ np.array([0.299, 0.587, 0.114])
+
+    def match_brightness(im, ref):                        # EgoSim renders much darker (as in the teaser)
+        q = np.linspace(1, 99, 50); y, yr = lum(im), lum(ref)
+        y2 = np.interp(y, np.percentile(y, q), np.percentile(yr, q))
+        return (im * (y2 / np.maximum(y, 1))[..., None]).clip(0, 255)
+
+    def up(m, box):
+        return np.asarray(Image.fromarray(m.astype(np.uint8) * 255).crop(box).resize((S, S), Image.BILINEAR)) > 127
+
+    for cond, u, bmodel, box in units:
         clip, iv = u.split('_')
         act = read(P / f'roots/{cond}/{u}/{clip}/hand_view_render/render_hand_{iv}.mp4', 480)
         scn = read(P / f'downloads/hot3d_prep_all/{clip}/view_render_old/render_{iv}.mp4', 480)
+        ours = read(P / f'rollouts/physca/{cond}/{u}/hot3d/{clip}/{u}_camera_obj_inference.mp4', 480)
+        base = read(P / f'rollouts/{bmodel}/{cond}/{u}/video.mp4', 480)
         hands = []
-        for a, b in zip(act, scn):
-            hm = Image.fromarray(((np.abs(a.astype(int) - b.astype(int)).sum(2) > 45) * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(5))
-            hands.append(edge(np.asarray(hm.filter(ImageFilter.MinFilter(7)).filter(ImageFilter.MaxFilter(7))) > 127, 7))
-        cells = [[np.asarray(Image.fromarray(a).resize((400, 400), Image.LANCZOS)) for a in act]]
-        for m in ['jcv', 'egosim', 'physca']:
-            v = P / (f'rollouts/physca/{cond}/{u}/hot3d/{clip}/{u}_camera_obj_inference.mp4' if m == 'physca' else f'rollouts/{m}/{cond}/{u}/video.mp4')
-            fr = read(v, 480)
-            base = {'physca': 'recon2d', 'jcv': 'recon2d_jcv'}.get(m, 'recon2d_baselines')
-            d = np.load(P / base / 'work' / f'{m}__{cond}__{u}' / 'masks.npz', allow_pickle=True)
+        for a_, b_ in zip(act, scn):
+            hm = Image.fromarray(((np.abs(a_.astype(int) - b_.astype(int)).sum(2) > 45) * 255).astype(np.uint8)).filter(ImageFilter.MedianFilter(5))
+            hands.append(edge(up(np.asarray(hm.filter(ImageFilter.MinFilter(7)).filter(ImageFilter.MaxFilter(7))) > 127, box), 7))
+        crop = lambda f: np.asarray(Image.fromarray(np.asarray(f).clip(0, 255).astype(np.uint8)).crop(box).resize((S, S), Image.LANCZOS))
+        cells = [[crop(a_) for a_ in act]]
+        for m, fr in ((bmodel, base), ('physca', ours)):
+            root = {'physca': 'recon2d', 'jcv': 'recon2d_jcv'}.get(m, 'recon2d_baselines')
+            d = np.load(P / root / 'work' / f'{m}__{cond}__{u}' / 'masks.npz', allow_pickle=True)
             obj = np.unpackbits(d['obj'], axis=2)[..., :480].astype(bool)
             out = []
             for t, f in enumerate(fr):
                 im = f.astype(float)
+                if m == 'egosim': im = match_brightness(im, ours[t].astype(float))
+                im = crop(im).copy()
                 if t < len(obj) and obj[t].any():
-                    o = obj[t]
-                    im[o] = 0.6 * im[o] + 0.4 * VIOLET
-                    im[edge(o, 5)] = VIOLET
+                    im[edge(up(obj[t], box), 9)] = VIOLET
                 if t < len(hands):
                     im[hands[t]] = CYAN
-                out.append(np.asarray(Image.fromarray(im.astype(np.uint8)).resize((400, 400), Image.LANCZOS)))
+                out.append(im)
             cells.append(out)
-        write(grid(cells, 4), VID / f'cf-{cond}.mp4', 24)
+        write(grid(cells, 3), VID / f'cf-{cond}.mp4', crf=18, poster=56 if cond == 'withdraw' else 68)
 
 
 # ---------------------------------------------------------------- simulation
