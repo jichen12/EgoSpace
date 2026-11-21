@@ -329,12 +329,31 @@ def sim():
     import shutil, subprocess
     V = PAGE / 'video'
     for src, dst, t in [('egospace_dex_002301', 'sim-clip-002301', 5), ('egospace_dex_002140', 'sim-clip-002140', 5),
-                        ('egospace_dex_o2', 'sim-h2o-book', 5), ('egospace_cf3d_withdraw_001995', 'cf3d-withdraw-clip-001995', 4),
-                        ('egospace_cf3d_reroute_002054', 'cf3d-reroute', 6), ('egospace_video', 'egospace-video', 2.5)]:
+                        ('egospace_dex_o2', 'sim-h2o-book', 5), ('egospace_video', 'egospace-video', 2.5)]:
         shutil.copy(V / f'{src}.mp4', VID / f'{dst}.mp4')
         png = IMG / f'{dst}.png'
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', str(t), '-i', str(VID / f'{dst}.mp4'), '-frames:v', '1',
                         '-vf', 'scale=1280:-2', str(png)], check=True)
+        Image.open(png).save(IMG / f'{dst}.webp', quality=82); png.unlink()
+    cfstack()
+
+
+def cfstack():
+    """One video per counterfactual experiment: the 3D+t shot of the edited action (tools/video cf3d) on top of the
+    real / EgoSpace / baseline comparison (cf-*.mp4, played at 12 fps, then held on its last frame until the 3D shot ends)."""
+    import subprocess
+    V = PAGE / 'video'
+    for src3d, cmp_, dst in [('egospace_cf3d_withdraw_001995', 'cf-withdraw-clip-001995', 'cfstack-withdraw-clip-001995'),
+                             ('egospace_cf3d_reroute_002054', 'cf-reroute', 'cfstack-reroute')]:
+        out = VID / f'{dst}.mp4'
+        fc = ('[0:v]fps=30,scale=1448:-2:flags=lanczos,setsar=1[a];'
+              '[1:v]setpts=PTS*16/12,fps=30,pad=1448:600:0:12:white,tpad=stop_mode=clone:stop_duration=20,setsar=1[b];'
+              '[a][b]vstack=shortest=1,format=yuv420p[v]')
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', str(V / f'{src3d}.mp4'), '-i', str(VID / f'{cmp_}.mp4'),
+                        '-filter_complex', fc, '-map', '[v]', '-c:v', 'libx264', '-preset', 'slow', '-crf', '21',
+                        '-movflags', '+faststart', '-an', str(out)], check=True)
+        png = IMG / f'{dst}.png'
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', '5', '-i', str(out), '-frames:v', '1', '-vf', 'scale=1280:-2', str(png)], check=True)
         Image.open(png).save(IMG / f'{dst}.webp', quality=82); png.unlink()
 
 
