@@ -183,3 +183,4 @@ span.resource-item{color:#b5b5b5}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 .table-wrap.narrow{max-width:760px;margin-left:auto;margin-right:auto}
 .results-table td.ours,.results-table th.ours{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.cf-stack{max-width:860px;margin:0 auto}

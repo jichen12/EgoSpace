@@ -24,6 +24,12 @@
       </div>
     </header>
 
+    <section id="video" aria-label="Project video">
+      <div class="grid-video" style="aspect-ratio:16/9">
+        <video controls playsinline preload="metadata" poster="assets/images/egospace-video.webp" aria-label="EgoSpace project video"><source src="assets/videos/egospace-video.mp4" type="video/mp4"></video>
+      </div>
+    </section>
+
     <section id="introduction" class="opening">
       <div class="row 50% uniform opening-pair">
         <figure class="media-column half">
@@ -41,13 +47,6 @@
         </figure>
       </div>
       <p class="project-intro">EgoSpace places head motion, hand motion, and scene geometry in one metric 3D space before generation,<br>then checks whether the generated interaction is physically plausible.</p>
-    </section>
-
-    <section id="video" aria-labelledby="video-title">
-      <h3 id="video-title">Video</h3>
-      <div class="grid-video" style="aspect-ratio:16/9">
-        <video controls playsinline preload="metadata" poster="assets/images/egospace-video.webp" aria-label="EgoSpace project video"><source src="assets/videos/egospace-video.mp4" type="video/mp4"></video>
-      </div>
     </section>
 
     <section id="results" aria-labelledby="results-title">
@@ -158,28 +157,18 @@
 
       <div class="task-group" id="counterfactual">
         <h4>(1) Counterfactual Action Following</h4>
-        <div class="task-copy">Only the hand command is edited. <b>Withdraw:</b> the hand stops 5&nbsp;cm before the object, so the object must stay. <b>Reroute:</b> the hand is moved 15&nbsp;cm sideways after lift-off, so the object must follow. Left: the edited action in 3D. Right: real video vs. rollouts from the edited action.</div>
+        <div class="task-copy">Only the hand command is edited. <b>Withdraw:</b> the hand stops 5&nbsp;cm before the object, so the object must stay. <b>Reroute:</b> the hand is moved 15&nbsp;cm sideways after lift-off, so the object must follow. Top: the edited action in 3D. Bottom: real video vs. rollouts from the edited action.</div>
         <div class="legend-row" aria-hidden="true"><span><i class="swatch cyan"></i>commanded hand</span><span><i class="swatch violet"></i>object (SAM&nbsp;3 mask)</span><span><b class="tick">✓</b> expected response</span><span><b class="cross">✗</b> violation</span></div>
         <div class="cf-block">
           <div class="cf-title">Withdraw — the object must stay</div>
-          <div class="cf-pair">
-            <div class="grid-video cf3d" style="aspect-ratio:16/9">
-              <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf3d-withdraw-clip-001995.webp" aria-label="Withdraw edit in 3D: the edited hands stop 5 cm before the object"><source src="assets/videos/cf3d-withdraw-clip-001995.mp4" type="video/mp4"></video>
-            </div>
-            <div class="grid-video" style="aspect-ratio:1448/588">
-              <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf-withdraw-clip-001995.webp" aria-label="Withdraw: real video, EgoSpace and baseline, with the edited action inset"><source src="assets/videos/cf-withdraw-clip-001995.mp4" type="video/mp4"></video>
-            </div>
+          <div class="grid-video cf-stack" style="aspect-ratio:1448/1414">
+            <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cfstack-withdraw-clip-001995.webp" aria-label="Withdraw: the edited action in 3D, then real video, EgoSpace and baseline rollouts"><source src="assets/videos/cfstack-withdraw-clip-001995.mp4" type="video/mp4"></video>
           </div>
         </div>
         <div class="cf-block">
           <div class="cf-title">Reroute — the object must follow the hand</div>
-          <div class="cf-pair">
-            <div class="grid-video cf3d" style="aspect-ratio:16/9">
-              <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf3d-reroute.webp" aria-label="Reroute edit in 3D: the edited hand grasps the object, then is moved 15 cm"><source src="assets/videos/cf3d-reroute.mp4" type="video/mp4"></video>
-            </div>
-            <div class="grid-video" style="aspect-ratio:1448/588">
-              <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf-reroute.webp" aria-label="Reroute: real video, EgoSpace and baseline, with the edited action inset"><source src="assets/videos/cf-reroute.mp4" type="video/mp4"></video>
-            </div>
+          <div class="grid-video cf-stack" style="aspect-ratio:1448/1414">
+            <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cfstack-reroute.webp" aria-label="Reroute: the edited action in 3D, then real video, EgoSpace and baseline rollouts"><source src="assets/videos/cfstack-reroute.mp4" type="video/mp4"></video>
           </div>
         </div>
         <div class="table-wrap narrow">
