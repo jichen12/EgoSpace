@@ -181,3 +181,5 @@ span.resource-item{color:#b5b5b5}
 @media screen and (max-width:980px){#main{padding-right:4em;padding-left:4em}}
 @media screen and (max-width:736px){:root{--gutter:.75em}#main{padding-right:1.5em;padding-left:1.5em}h3{font-size:1em}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+.table-wrap.narrow{max-width:760px;margin-left:auto;margin-right:auto}
+.results-table td.ours,.results-table th.ours{background:var(--accent-soft);color:var(--accent);font-weight:700}

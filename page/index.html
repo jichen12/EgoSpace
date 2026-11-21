@@ -69,10 +69,6 @@
           <div class="result-comparison">Counterfactual hand edits · lower is better</div>
         </div>
       </div></div>
-      <figure class="paper-figure">
-        <button class="image fit figure-open" data-figure-title="Geometry-aligned actions and physics-based verification" aria-label="Enlarge Figure 1"><img src="assets/images/teaser_v7.webp" width="2600" height="846" decoding="async" alt="Figure 1: unified 3D space, counterfactual action edits, dexterous execution in simulation, force and moment proxy, method comparison table, and radar plot of visual and physical metrics"></button>
-        <figcaption><b>Geometry-aligned actions and physics-based verification.</b> EgoSpace aligns commanded head and hand motions with initial-frame scene geometry through depth-aware compositing, establishing their spatial relationship before generation. Generated interactions are then evaluated through counterfactual action edits, RGB-derived force and moment proxies, and dexterous execution in simulation.</figcaption>
-      </figure>
     </section>
 
     <section id="resources" aria-labelledby="resources-title">
@@ -104,17 +100,10 @@
 
     <section id="method">
       <h3>Geometry-Aligned Actions</h3>
-      <div class="setup-copy">
-        <b>Where each hand lies relative to the scene is decided before generation, not left to the generator.</b><br>
-        ① <b>Metric scene anchoring.</b> Depth Pro estimates metric depth for the initial frame; scene pixels, excluding the initial hands, are back-projected into a colored point cloud. The initial camera defines the world frame, in meters.<br>
-        ② <b>Coupling viewpoint and articulation.</b> The scene points and the commanded MANO hands are rendered together along the commanded head trajectory and composited by depth. The resulting unified 3D action video, with a mask for unobserved regions and hand areas, fixes depth order and occlusion without specifying any future object state.<br>
-        ③ <b>Action branch.</b> The frozen VAE encodes the action video; with camera Plücker rays and the mask, a trainable action branch injects zero-initialized residuals into the frozen Wan&nbsp;2.1 diffusion transformer.<br>
-        ④ <b>Causal object reference.</b> Two rendered views and an initial-frame view of the manipulated object enter as clean tokens outside the video's space-time grid (TSS-RoPE) through one-way attention, supplying identity while the object's motion must come from the actions.
-      </div>
+      <div class="setup-copy">Head motion, hand motion and the initial-frame scene are placed in one metric 3D space and rendered together into a single action video, so where each hand lies relative to the scene is fixed <b>before</b> generation. A trainable action branch injects this video into a frozen Wan&nbsp;2.1 backbone.</div>
       <div class="row 50% uniform setup-figure">
         <figure class="media-column full">
           <button class="image fit figure-open" data-figure-title="Overview of the EgoSpace pipeline" aria-label="Enlarge pipeline overview"><img src="assets/images/fig2_v2_pc.webp" width="2600" height="1050" loading="lazy" decoding="async" alt="Figure 2: hands, ego-motion and first frame are placed in a shared metric 3D scene, rendered into a unified action video that conditions the DiT through an action controller, with a causal object reference branch; generated videos are evaluated by counterfactual action, RGB force and moment, and executability in simulation"></button>
-          <figcaption><b>Left:</b> commanded hands and initial-frame scene geometry are jointly rendered along the target camera trajectory with depth-aware compositing, forming a unified 3D action video that a trainable action branch injects into the frozen backbone; a causal object reference branch provides appearance and identity cues without future object states. <b>Right:</b> generated interactions undergo physics-based verification.</figcaption>
         </figure>
       </div>
     </section>
@@ -122,7 +111,7 @@
     <section id="comparison">
       <h3>Comparison with Baselines</h3>
       <div class="setup-copy">
-        Each rollout starts from the same first frame and the same commanded head and hand motion. EgoHOI is reimplemented on the same Wan&nbsp;2.1 backbone, training split and object reference branch as EgoSpace, so it isolates separate head and hand pathways against our geometry-aligned action video. Uni3C, EgoSim and JointControlVideo (JCV) use public weights; Generated Reality (GR) is retrained on our split.
+        Same first frame, same commanded head and hand motion.
       </div>
       <div class="chart-toolbar">
         <div class="segmented" role="group" aria-label="Select example clip">
@@ -158,26 +147,18 @@
           </tbody>
         </table>
       </div>
-      <p class="table-note">ATE in cm, RRE in degrees, MPJPE in mm, miss and hallucination ratios in %, object position in cm and rotation in degrees. EgoSpace is best on every metric.</p>
-      <div class="row 50% uniform setup-figure">
-        <figure class="media-column full">
-          <button class="image fit figure-open" data-figure-title="Qualitative comparison with baselines" aria-label="Enlarge qualitative comparison figure"><img src="assets/images/fig3_v2_4row.webp" width="2400" height="1466" loading="lazy" decoding="async" alt="Figure 3: two moments from each of two interactions, comparing ground truth, EgoSpace and baselines, with magnified hand-object insets"></button>
-          <figcaption>EgoSpace better preserves object appearance and hand-object interaction, while baselines show deformed objects, drifting content and misplaced hands. Red-bordered insets magnify the hand-object region.</figcaption>
-        </figure>
-      </div>
+      <p class="table-note">ATE in cm, RRE in degrees, MPJPE in mm, miss / hallucination in %, object position in cm and rotation in degrees.</p>
     </section>
 
     <section id="verification">
       <h3>Physics-Based Verification</h3>
       <div class="setup-copy">
-        <b>A realistic video can still depict an interaction that a physical hand could not reproduce.</b><br>
-        We test generated interactions at three levels: whether object responses follow edited hand actions, whether the depicted contacts produce plausible loads, and whether the reconstructed interaction can be executed by dexterous hands in simulation.
+        A realistic video can still depict an interaction that a physical hand could not reproduce. We test whether objects respond to edited hand actions, and whether the interaction can be executed by dexterous hands in simulation.
       </div>
 
       <div class="task-group" id="counterfactual">
         <h4>(1) Counterfactual Action Following</h4>
-        <div class="task-copy">The first frame, caption, camera trajectory and object references stay fixed; only the hand command is edited. <u><b>Withdraw:</b></u> the hand halts at least 5&nbsp;cm from the object without closing the fingers, so the object must stay. <u><b>Reroute:</b></u> after lift-off the wrist is translated 15&nbsp;cm sideways over 15 frames, so the object must follow the hand.</div>
-        <div class="task-copy">Left: the <b>edited action</b> in 3D, with the initial-frame point cloud, the head camera and the edited hands; the live hand–object distance shows whether the edited hands ever touch the object. Right: the <b>real video</b> with the original action, and the <b>EgoSpace</b> and <b>baseline</b> rollouts generated from the edited action (inset, top-right), with whether each rollout follows the edit.</div>
+        <div class="task-copy">Only the hand command is edited. <b>Withdraw:</b> the hand stops 5&nbsp;cm before the object, so the object must stay. <b>Reroute:</b> the hand is moved 15&nbsp;cm sideways after lift-off, so the object must follow. Left: the edited action in 3D. Right: real video vs. rollouts from the edited action.</div>
         <div class="legend-row" aria-hidden="true"><span><i class="swatch cyan"></i>commanded hand</span><span><i class="swatch violet"></i>object (SAM&nbsp;3 mask)</span><span><b class="tick">✓</b> expected response</span><span><b class="cross">✗</b> violation</span></div>
         <div class="cf-block">
           <div class="cf-title">Withdraw — the object must stay</div>
@@ -201,80 +182,43 @@
             </div>
           </div>
         </div>
-        <div class="row 50% uniform split-row">
-          <div class="media-column half">
-            <div class="table-wrap">
-              <table class="results-table compact">
-                <thead>
-                  <tr><th rowspan="2" class="method">Method</th><th colspan="2">Violation (%)↓</th><th colspan="2">Hand IoU↑</th></tr>
-                  <tr><th>Withdraw</th><th>Reroute</th><th>Withdraw</th><th>Reroute</th></tr>
-                </thead>
-                <tbody>
-                  <tr><td class="method">EgoHOI</td><td>66.0</td><td>85.4</td><td>0.102</td><td>0.073</td></tr>
-                  <tr><td class="method">Uni3C</td><td>34.0</td><td>80.5</td><td>0.071</td><td>0.060</td></tr>
-                  <tr><td class="method">EgoSim</td><td>28.3</td><td>51.2</td><td>0.530</td><td>0.497</td></tr>
-                  <tr><td class="method">GR</td><td>60.4</td><td>50.0</td><td>0.371</td><td>0.385</td></tr>
-                  <tr><td class="method">JCV</td><td>45.3</td><td>40.5</td><td>0.612</td><td>0.569</td></tr>
-                  <tr class="ours"><td class="method">EgoSpace</td><td>22.6</td><td>29.3</td><td>0.634</td><td>0.592</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="media-column half side-copy">
-            <p>A violation is scored when, for three consecutive frames, the object moves without contact (withdraw) or lies farther than half the separation gap from the commanded hand (reroute). Object and camera trajectories are recovered from each rollout, and all thresholds are calibrated on real videos before any generated rollout is scored.</p>
-            <p>Hand IoU between generated and commanded hand silhouettes separates a failure to realize the hand command from a failure of the object to respond.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="task-group" id="force">
-        <h4>(2) Force and Moment Proxy from RGB</h4>
-        <div class="task-copy">For each finger, the hand recovered by HaWoR gives a flexion share and fingertip penetration into the SAM&nbsp;3 object mask, which define a contact load. Contact points and inward normals lie on the visible object surface reconstructed with Metric3D&nbsp;v2, giving a resultant force and a normalized moment. <u><b>Joint balance</b></u> rewards a resultant aligned against gravity with cancelling moments, <u><b>temporal consistency</b></u> penalizes abrupt load changes, and <u><b>F+M fidelity</b></u> compares the load system with the one estimated on the paired real video. These are scale-normalized geometric proxies, not calibrated forces.</div>
-        <div class="row 50% uniform split-row">
-          <figure class="media-column half">
-            <button class="image fit figure-open" data-figure-title="Contact-load analysis and dexterous simulation" aria-label="Enlarge contact-load and simulation figure"><img src="assets/images/sim_rgb_v5.webp" width="1500" height="1658" loading="lazy" decoding="async" alt="Figure 4: top, dexterous simulation of EgoSpace and EgoHOI reconstructions with success and failure marks; bottom, fingertip contacts, net force and net moment estimated from RGB"></button>
-          </figure>
-          <div class="media-column half side-copy">
-            <p><b>Top:</b> reconstructed interactions retargeted to dexterous hands in simulation; checks and crosses mark task success.</p>
-            <p><b>Bottom:</b> RGB-derived fingertip contacts, net force and net moment. Checks and crosses indicate whether the generated net force agrees with the force estimated from the real video.</p>
-            <p>EgoSpace attains the highest joint balance (0.243), temporal consistency (0.557) and F+M fidelity (0.591) among generated methods.</p>
-          </div>
+        <div class="table-wrap narrow">
+          <table class="results-table compact">
+            <thead><tr><th class="method">Violation (%)↓</th><th>EgoHOI</th><th>Uni3C</th><th>EgoSim</th><th>GR</th><th>JCV</th><th class="ours">EgoSpace</th></tr></thead>
+            <tbody>
+              <tr><td class="method">Withdraw</td><td>66.0</td><td>34.0</td><td>28.3</td><td>60.4</td><td>45.3</td><td class="ours">22.6</td></tr>
+              <tr><td class="method">Reroute</td><td>85.4</td><td>80.5</td><td>51.2</td><td>50.0</td><td>40.5</td><td class="ours">29.3</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
       <div class="task-group" id="simulation">
-        <h4>(3) Dexterous Execution in Simulation</h4>
-        <div class="task-copy">ViPE and Dyn-HaMR recover camera and MANO hands from each rollout and ProxyPose recovers the object trajectory; all states are aligned to the dataset frame using only the first frame. SPIDER then retargets the interaction to bimanual dexterous hands, which must move the object along the reconstructed trajectory through physical contact alone. <u><b>Task success</b></u> requires mean object errors within 10&nbsp;cm and 0.5&nbsp;rad.</div>
+        <h4>(2) Dexterous Execution in Simulation</h4>
+        <div class="task-copy">Hands, camera and object are recovered from each rollout and retargeted to dexterous hands, which must move the object along the reconstructed trajectory through contact alone.</div>
         <div class="segmented sim-tabs" role="group" aria-label="Select simulation example">
           <button class="active" data-sim="h2o-book" aria-pressed="true">Example 1</button>
           <button data-sim="clip-002301" aria-pressed="false">Example 2</button>
           <button data-sim="clip-002140" aria-pressed="false">Example 3</button>
         </div>
-        <div class="task-copy">Each example shows the EgoSpace rollout and its execution in simulation. The boxes in the simulation show the live contact-force map of each dexterous hand that touches the object, and the chart below gives each finger's share of that hand's contact force over time (grey: no contact). A hand that never touches the object is not shown.</div>
         <div class="grid-video sim-video" style="aspect-ratio:16/9">
           <video id="sim-video" class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/sim-h2o-book.webp" aria-label="EgoSpace rollout, its dexterous-hand simulation with per-hand contact-force maps, and per-finger contact-force shares"><source src="assets/videos/sim-h2o-book.mp4" type="video/mp4"></video>
         </div>
 
-        <h4 class="table-title">Physical plausibility and executability</h4>
-        <div class="table-wrap">
-          <table class="results-table">
-            <thead>
-              <tr><th rowspan="2" class="method">Method</th><th colspan="3">RGB force / moment</th><th colspan="4">Physics retargeting</th></tr>
-              <tr><th>Joint bal.↑</th><th>Temp. cons.↑</th><th>F+M fid.↑</th><th>Exec. (%)↑</th><th>Contact prec.↑</th><th>Task succ. (%)↑</th><th>Trans-AUC<sub>10</sub>↑</th></tr>
-            </thead>
+        <div class="table-wrap narrow">
+          <table class="results-table compact">
+            <thead><tr><th class="method">Method</th><th>Task succ. (%)↑</th><th>Trans-AUC<sub>10</sub>↑</th></tr></thead>
             <tbody>
-              <tr class="reference"><td class="method">Real video</td><td>0.258</td><td>0.588</td><td>n/a</td><td>99.4</td><td>85.12</td><td>26.71</td><td>0.2388</td></tr>
-              <tr><td class="method">Wan 2.1</td><td>0.200</td><td>0.452</td><td>0.498</td><td>67.7</td><td>73.74</td><td>6.21</td><td>0.0884</td></tr>
-              <tr><td class="method">EgoHOI</td><td>0.235</td><td>0.545</td><td>0.520</td><td>90.7</td><td>75.22</td><td>11.18</td><td>0.1458</td></tr>
-              <tr><td class="method">Uni3C</td><td>0.238</td><td>0.533</td><td>0.515</td><td>90.7</td><td>75.30</td><td>9.94</td><td>0.1453</td></tr>
-              <tr><td class="method">EgoSim</td><td>0.196</td><td>0.450</td><td>0.490</td><td>86.3</td><td>78.90</td><td>10.56</td><td>0.1594</td></tr>
-              <tr><td class="method">GR</td><td>0.195</td><td>0.481</td><td>0.489</td><td>93.2</td><td>79.43</td><td>8.70</td><td>0.1291</td></tr>
-              <tr><td class="method">JCV</td><td>0.237</td><td>0.548</td><td>0.589</td><td>97.5</td><td>79.74</td><td>10.56</td><td>0.1299</td></tr>
-              <tr class="ours"><td class="method">EgoSpace (Ours)</td><td>0.243</td><td>0.557</td><td>0.591</td><td>99.4</td><td>80.02</td><td>18.63</td><td>0.2108</td></tr>
+              <tr class="reference"><td class="method">Real video</td><td>26.71</td><td>0.2388</td></tr>
+              <tr><td class="method">EgoHOI</td><td>11.18</td><td>0.1458</td></tr>
+              <tr><td class="method">Uni3C</td><td>9.94</td><td>0.1453</td></tr>
+              <tr><td class="method">EgoSim</td><td>10.56</td><td>0.1594</td></tr>
+              <tr><td class="method">GR</td><td>8.70</td><td>0.1291</td></tr>
+              <tr><td class="method">JCV</td><td>10.56</td><td>0.1299</td></tr>
+              <tr class="ours"><td class="method">EgoSpace (Ours)</td><td>18.63</td><td>0.2108</td></tr>
             </tbody>
           </table>
         </div>
-        <p class="table-note">Physics retargeting uses the 161 test clips on which hand reconstruction succeeds for every method. Failed clips count as unsuccessful with zero Trans-AUC<sub>10</sub>. Real video is a reference for the pipeline.</p>
       </div>
     </section>
 
@@ -285,44 +229,7 @@
           <div id="rank-chart" class="rank-chart" role="img" aria-label="Scatter plot of PSNR against simulated Trans-AUC for each method"></div>
         </figure>
         <div class="media-column half side-copy">
-          <p>Agreement with the real video's pixels and executability of the interaction in simulation are different properties of a rollout.</p>
-          <p>Uni3C exceeds EgoSim by 3.35&nbsp;dB in PSNR, yet its Trans-AUC<sub>10</sub> is lower (0.1453 vs. 0.1594). Generated Reality and EgoSim differ by only 0.21&nbsp;dB in PSNR, while EgoSim leads by 0.0303 in Trans-AUC<sub>10</sub>.</p>
-          <p>EgoSpace leads on both axes; the dashed line marks real videos run through the same pipeline.</p>
-        </div>
-      </div>
-    </section>
-
-    <section id="ablation">
-      <h3>Ablation Study</h3>
-      <div class="row 50% uniform split-row">
-        <div class="media-column half">
-          <h4 class="table-title">Head and hand control</h4>
-          <div class="table-wrap">
-            <table class="results-table compact">
-              <thead><tr><th>Head</th><th>Hand</th><th>PSNR↑</th><th>RRE↓</th><th>ATE↓</th><th>MPJPE↓</th><th>Miss↓</th></tr></thead>
-              <tbody>
-                <tr><td class="off">✗</td><td class="off">✗</td><td>13.56</td><td>11.97</td><td>7.391</td><td>53.69</td><td>8.88</td></tr>
-                <tr><td class="off">✗</td><td class="on">✓</td><td>13.32</td><td>12.11</td><td>7.304</td><td>53.06</td><td>8.05</td></tr>
-                <tr><td class="on">✓</td><td class="off">✗</td><td>18.56</td><td>0.823</td><td>2.804</td><td>48.31</td><td>6.85</td></tr>
-                <tr class="ours"><td class="on">✓</td><td class="on">✓</td><td>20.96</td><td>0.685</td><td>2.758</td><td>20.70</td><td>3.25</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="table-note">Hand control helps most once head control fixes the viewpoint: with head control, adding hands cuts MPJPE from 48.31 to 20.70&nbsp;mm (−57.2%); without it, by only 0.63&nbsp;mm.</p>
-        </div>
-        <div class="media-column half">
-          <h4 class="table-title">Object reference conditioning</h4>
-          <div class="table-wrap">
-            <table class="results-table compact">
-              <thead><tr><th class="method">Variant</th><th>Object rot.↓</th><th>Object world rot.↓</th></tr></thead>
-              <tbody>
-                <tr><td class="method">Action only</td><td>11.99</td><td>43.06</td></tr>
-                <tr><td class="method">Object only</td><td>21.60</td><td>62.44</td></tr>
-                <tr class="ours"><td class="method">EgoSpace</td><td>10.91</td><td>36.66</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="table-note">Object references complement the actions, but cannot replace them: without actions, world-frame rotation error rises to 62.44°, since references carry no future object pose.</p>
+          <p>Looking right is not the same as being executable: Uni3C beats EgoSim by 3.35&nbsp;dB PSNR yet executes worse in simulation. EgoSpace leads on both axes.</p>
         </div>
       </div>
     </section>
