@@ -13,13 +13,14 @@ Rebuilt with `python3 tools/build_assets.py [figs|hero|compare|cf|sim]` on the h
 - `videos/hero-*.mp4` — action video and EgoSpace rollout of HOT3D clip-001973_69-149 (physca_cf roots/orig, rollouts/physca/orig).
 - `videos/compare-*.mp4` — Fig. 3 clips (clip-003335_0-80, clip-002966_69-149, subject3_ego__o1__5_0-80), 4x2 grid:
   first frame | real | EgoSpace | EgoHOI / Uni3C | EgoSim | GR | JCV (paths from `manuscript/fig/fig_3_src/srcs2.py`).
-- `videos/cf-withdraw-clip-{001995,001918}.mp4`, `videos/cf-reroute.mp4` — counterfactual clips (`CF_CLIPS` in
-  build_assets.py): real video (GT) | EgoSpace | baseline with the edited action as a top-right inset, 480 px per cell; top strip = the edit and its implication,
-  bottom strip = original action / follows the edit / ignores the edit (CAP_WITHDRAW, CAP_REROUTE)
-  cyan hand + violet SAM 3 object outline, labels burned
-  in. The baseline cell is labelled 'Baseline' (001995: EgoHOI, outlined with EgoHOI's own SAM 3 hand mask; 001918 and the
-  reroute clip clip-002054_69-149: JCV).
-- `videos/sim-clip-{002301,002140}.mp4` — Fig. 4 simulation units: ProxyPose RGB crops (real / EgoSpace / EgoHOI) over
-  SPIDER rollouts (GT labels / EgoSpace / EgoHOI). The SPIDER frame sequences are rendered in `jc-con` with
-  `tools/sim_render/run.sh` (copy `render_seq.py` to /tmp/egospace_render_seq.py), then pulled out to `tools/sim_render/frames/<clip>_0-80/<method>/` (or pass `SIM_FRAMES`).
+- `videos/cf-withdraw-clip-001995.mp4`, `videos/cf-reroute.mp4` — counterfactual clips (`CF_CLIPS` in
+  build_assets.py; the page shows only these two): real video (GT) | EgoSpace | baseline with the edited action as a top-right inset,
+  480 px per cell; top strip = the edit and its implication, bottom strip = original action / follows the edit / ignores the edit
+  (CAP_WITHDRAW, CAP_REROUTE), cyan hand + violet SAM 3 object outline, labels burned in. Baseline cell labelled 'Baseline'
+  (001995: EgoHOI, outlined with EgoHOI's own SAM 3 hand mask; reroute clip-002054_69-149: JCV).
+- `sim` step (copies from `page/video/`, rendered by `tools/video/build_video.sh`, see tools/video/README.md):
+  `videos/cf3d-{withdraw-clip-001995,reroute}.mp4` — 3D+t point-cloud shot of each edited action, shown left of the clips;
+  `videos/sim-{h2o-book,clip-002301,clip-002140}.mp4` — dexterous execution: EgoSpace rollout -> SPIDER simulation with
+  live contact-force maps of the hands that touch the object and per-finger force shares (002301 / 002140: left hand only);
+  `videos/egospace-video.mp4` — the project video (Video section).
 - Posters (`images/*.webp` named like the videos) are frame 40 of each grid, frame 0 for the hero pair.

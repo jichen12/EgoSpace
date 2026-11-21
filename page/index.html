@@ -43,6 +43,13 @@
       <p class="project-intro">EgoSpace places head motion, hand motion, and scene geometry in one metric 3D space before generation,<br>then checks whether the generated interaction is physically plausible.</p>
     </section>
 
+    <section id="video" aria-labelledby="video-title">
+      <h3 id="video-title">Video</h3>
+      <div class="grid-video" style="aspect-ratio:16/9">
+        <video controls playsinline preload="metadata" poster="assets/images/egospace-video.webp" aria-label="EgoSpace project video"><source src="assets/videos/egospace-video.mp4" type="video/mp4"></video>
+      </div>
+    </section>
+
     <section id="results" aria-labelledby="results-title">
       <h3 id="results-title">What Does Geometry Alignment Unlock?</h3>
       <div class="result-metrics"><div class="row 50% uniform">
@@ -170,21 +177,28 @@
       <div class="task-group" id="counterfactual">
         <h4>(1) Counterfactual Action Following</h4>
         <div class="task-copy">The first frame, caption, camera trajectory and object references stay fixed; only the hand command is edited. <u><b>Withdraw:</b></u> the hand halts at least 5&nbsp;cm from the object without closing the fingers, so the object must stay. <u><b>Reroute:</b></u> after lift-off the wrist is translated 15&nbsp;cm sideways over 15 frames, so the object must follow the hand.</div>
-        <div class="task-copy">Each clip states the edit and what it implies (top), then shows the <b>real video</b> with the original action, and the <b>EgoSpace</b> and <b>baseline</b> rollouts generated from the <b>edited action</b> (inset, top-right). The line underneath says whether each rollout follows the edit.</div>
+        <div class="task-copy">Left: the <b>edited action</b> in 3D, with the initial-frame point cloud, the head camera and the edited hands; the live hand–object distance shows whether the edited hands ever touch the object. Right: the <b>real video</b> with the original action, and the <b>EgoSpace</b> and <b>baseline</b> rollouts generated from the edited action (inset, top-right), with whether each rollout follows the edit.</div>
         <div class="legend-row" aria-hidden="true"><span><i class="swatch cyan"></i>commanded hand</span><span><i class="swatch violet"></i>object (SAM&nbsp;3 mask)</span><span><b class="tick">✓</b> expected response</span><span><b class="cross">✗</b> violation</span></div>
         <div class="cf-block">
           <div class="cf-title">Withdraw — the object must stay</div>
-          <div class="grid-video" style="aspect-ratio:1448/588">
-            <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf-withdraw-clip-001995.webp" aria-label="Withdraw: real video, EgoSpace and baseline, with the edited action inset"><source src="assets/videos/cf-withdraw-clip-001995.mp4" type="video/mp4"></video>
-          </div>
-          <div class="grid-video" style="aspect-ratio:1448/588">
-            <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf-withdraw-clip-001918.webp" aria-label="Withdraw: real video, EgoSpace and baseline, with the edited action inset"><source src="assets/videos/cf-withdraw-clip-001918.mp4" type="video/mp4"></video>
+          <div class="cf-pair">
+            <div class="grid-video cf3d" style="aspect-ratio:16/9">
+              <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf3d-withdraw-clip-001995.webp" aria-label="Withdraw edit in 3D: the edited hands stop 5 cm before the object"><source src="assets/videos/cf3d-withdraw-clip-001995.mp4" type="video/mp4"></video>
+            </div>
+            <div class="grid-video" style="aspect-ratio:1448/588">
+              <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf-withdraw-clip-001995.webp" aria-label="Withdraw: real video, EgoSpace and baseline, with the edited action inset"><source src="assets/videos/cf-withdraw-clip-001995.mp4" type="video/mp4"></video>
+            </div>
           </div>
         </div>
         <div class="cf-block">
           <div class="cf-title">Reroute — the object must follow the hand</div>
-          <div class="grid-video" style="aspect-ratio:1448/588">
-            <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf-reroute.webp" aria-label="Reroute: real video, EgoSpace and baseline, with the edited action inset"><source src="assets/videos/cf-reroute.mp4" type="video/mp4"></video>
+          <div class="cf-pair">
+            <div class="grid-video cf3d" style="aspect-ratio:16/9">
+              <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf3d-reroute.webp" aria-label="Reroute edit in 3D: the edited hand grasps the object, then is moved 15 cm"><source src="assets/videos/cf3d-reroute.mp4" type="video/mp4"></video>
+            </div>
+            <div class="grid-video" style="aspect-ratio:1448/588">
+              <video class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/cf-reroute.webp" aria-label="Reroute: real video, EgoSpace and baseline, with the edited action inset"><source src="assets/videos/cf-reroute.mp4" type="video/mp4"></video>
+            </div>
           </div>
         </div>
         <div class="row 50% uniform split-row">
@@ -232,15 +246,13 @@
         <h4>(3) Dexterous Execution in Simulation</h4>
         <div class="task-copy">ViPE and Dyn-HaMR recover camera and MANO hands from each rollout and ProxyPose recovers the object trajectory; all states are aligned to the dataset frame using only the first frame. SPIDER then retargets the interaction to bimanual dexterous hands, which must move the object along the reconstructed trajectory through physical contact alone. <u><b>Task success</b></u> requires mean object errors within 10&nbsp;cm and 0.5&nbsp;rad.</div>
         <div class="segmented sim-tabs" role="group" aria-label="Select simulation example">
-          <button class="active" data-sim="clip-002301" aria-pressed="true">Example 1</button>
-          <button data-sim="clip-002140" aria-pressed="false">Example 2</button>
+          <button class="active" data-sim="h2o-book" aria-pressed="true">Example 1</button>
+          <button data-sim="clip-002301" aria-pressed="false">Example 2</button>
+          <button data-sim="clip-002140" aria-pressed="false">Example 3</button>
         </div>
-        <div class="grid-video sim-video" style="--cols:3;--rows:2;aspect-ratio:1208/804">
-          <video id="sim-video" class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/sim-clip-002301.webp" aria-label="Top: real video, EgoSpace and EgoHOI rollouts. Bottom: dexterous-hand simulation of each reconstructed interaction"><source src="assets/videos/sim-clip-002301.mp4" type="video/mp4"></video>
-          <ol class="grid-labels" aria-hidden="true">
-            <li>Real video</li><li class="ours">EgoSpace rollout</li><li>EgoHOI rollout</li>
-            <li>Simulation · ground-truth labels</li><li class="ours">Simulation · EgoSpace <b class="tick">✓</b></li><li>Simulation · EgoHOI <b class="cross">✗</b></li>
-          </ol>
+        <div class="task-copy">Each example shows the EgoSpace rollout and its execution in simulation. The boxes in the simulation show the live contact-force map of each dexterous hand that touches the object, and the chart below gives each finger's share of that hand's contact force over time (grey: no contact). A hand that never touches the object is not shown.</div>
+        <div class="grid-video sim-video" style="aspect-ratio:16/9">
+          <video id="sim-video" class="autoplay" controls muted loop playsinline preload="none" poster="assets/images/sim-h2o-book.webp" aria-label="EgoSpace rollout, its dexterous-hand simulation with per-hand contact-force maps, and per-finger contact-force shares"><source src="assets/videos/sim-h2o-book.mp4" type="video/mp4"></video>
         </div>
 
         <h4 class="table-title">Physical plausibility and executability</h4>

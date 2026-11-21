@@ -323,16 +323,19 @@ def cf():
 
 # ---------------------------------------------------------------- simulation
 def sim():
-    S = 400
-    for u in ['clip-002301_0-80', 'clip-002140_0-80']:
-        clip, iv = u.split('_')
-        rgb = [read(OUT / f'{d}/{clip}/{clip}_proxypose_{iv}.mp4', S, crop=(0, 0, 512, 512), n=80)
-               for d in ['proxypose_hot3d_test', 'proxypose_hot3d_infer_ours', 'proxypose_hot3d_infer_camera_egohoihand_obj']]
-        sims = []
-        for m in ['gt_labels', 'infer_ours', 'egohoi']:
-            fs = sorted((SIMF / u / m).glob('*.png'))[:80]
-            sims.append([np.asarray(Image.open(f).convert('RGB').resize((S, S), Image.LANCZOS)) for f in fs])
-        write(grid(rgb + sims, 3), VID / f'sim-{clip}.mp4', 24)
+    """Dexterous-execution and project-video assets, rendered by tools/video (build_video.sh): EgoSpace rollout ->
+    SPIDER simulation with per-hand contact-force maps and per-finger force shares; plus the 3D+t counterfactual shots
+    and the project video itself. Copies the mp4s and writes a poster per clip."""
+    import shutil, subprocess
+    V = PAGE / 'video'
+    for src, dst, t in [('egospace_dex_002301', 'sim-clip-002301', 5), ('egospace_dex_002140', 'sim-clip-002140', 5),
+                        ('egospace_dex_o2', 'sim-h2o-book', 5), ('egospace_cf3d_withdraw_001995', 'cf3d-withdraw-clip-001995', 4),
+                        ('egospace_cf3d_reroute_002054', 'cf3d-reroute', 6), ('egospace_video', 'egospace-video', 2.5)]:
+        shutil.copy(V / f'{src}.mp4', VID / f'{dst}.mp4')
+        png = IMG / f'{dst}.png'
+        subprocess.run(['ffmpeg', '-v', 'error', '-y', '-ss', str(t), '-i', str(VID / f'{dst}.mp4'), '-frames:v', '1',
+                        '-vf', 'scale=1280:-2', str(png)], check=True)
+        Image.open(png).save(IMG / f'{dst}.webp', quality=82); png.unlink()
 
 
 if __name__ == '__main__':

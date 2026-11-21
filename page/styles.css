@@ -95,6 +95,8 @@ a:hover{text-decoration:underline}
 .cf-block{margin-bottom:1.5em}
 .cf-title{color:#787878;font-size:.95em;margin-bottom:.4em}
 .cf-block .grid-video{margin-bottom:.6em}.cf-block .grid-video:last-child{margin-bottom:0}
+.cf-pair{display:flex;align-items:center;gap:.8em}.cf-pair>.grid-video{margin:0;flex:1 1 0}.cf-pair>.grid-video.cf3d{flex:0 0 38%}
+@media screen and (max-width:980px){.cf-pair{flex-direction:column}.cf-pair>.grid-video,.cf-pair>.grid-video.cf3d{flex:none;width:100%}}
 .legend-row{display:flex;flex-wrap:wrap;gap:.4em 1.6em;margin:0 0 1em;font-size:.8em;line-height:1.5}
 .legend-row .swatch{display:inline-block;width:1.6em;height:.35em;margin-right:.45em;vertical-align:middle}
 .swatch.cyan{background:#28d7f5}.swatch.violet{background:#963cff}
