@@ -359,6 +359,6 @@ def cfstack():
 
 if __name__ == '__main__':
     IMG.mkdir(parents=True, exist_ok=True); VID.mkdir(parents=True, exist_ok=True)
-    todo = sys.argv[1:] or ['figs', 'hero', 'compare', 'cf', 'sim']
+    todo = sys.argv[1:] or ['figs', 'compare', 'cf', 'sim']   # 'hero' (input/output pair) removed from the page 2026-11-20
     for t in todo:
         globals()[t]()
