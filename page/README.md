@@ -4,8 +4,8 @@ Static page in the TouchScale / UMI style (`index.html`, `styles.css`, `app.js`)
 
     python3 -m http.server 8000   # then open http://localhost:8000
 
-Text and numbers come from `manuscript/main.tex` (appendix excluded). Authors, paper/code links and the BibTeX entry are
-placeholders until the paper is public. `--accent` in `styles.css` sets the theme colour (EgoSpace blue; TouchScale used #8c1515).
+Text and numbers come from `manuscript/main.tex` (appendix excluded). Authors are a
+placeholder until the paper is public (Resources and Citation sections were removed 2026-11-22). `--accent` in `styles.css` sets the theme colour (EgoSpace blue; TouchScale used #8c1515).
 
 ## Assets (`assets/`, ~9 MB)
 Rebuilt with `python3 tools/build_assets.py [figs|hero|compare|cf|sim]` on the host (needs ffmpeg, pdftoppm, PIL):
