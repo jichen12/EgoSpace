@@ -1,0 +1,66 @@
+{
+ "dataset": "HOT3D (Aria, stream 214-1)",
+ "clip": "clip-001995",
+ "frames": [
+  69,
+  149
+ ],
+ "edit": "withdraw",
+ "object_views": [
+  "outputs/hot3d_preprocessed/clip-001995/curated_views/000069/000069_obj_000019_flask_uid-4111539686391.png",
+  "outputs/hot3d_preprocessed/clip-001995/curated_views/000149/000149_obj_000019_flask_uid-4111539686391.png",
+  "outputs/hot3d_preprocessed/clip-001995/curated_views/000107/000107_obj_000019_flask_uid-4111539686391.png"
+ ],
+ "prompt": "Pour from pitcher into cup",
+ "paper_generation": {
+  "checkpoint": "egohoi-control-15k-2026-09-03/train_camera_obj/final.pt",
+  "seed": 23,
+  "sampling_steps": 40,
+  "guide_scale": 5.0,
+  "shift": 3.0
+ },
+ "edit_spec": {
+  "unit": "clip-001995_69-149",
+  "clip": "clip-001995",
+  "start": 69,
+  "object_uid": "4111539686391",
+  "object_id": "19",
+  "active_hands": [
+   "left",
+   "right"
+  ],
+  "d_frame0_cm": {
+   "left": 5.8,
+   "right": 26.9
+  },
+  "t_contact": {
+   "left": 22,
+   "right": 50
+  },
+  "pre_contact_obj_disp_cm": 0.17,
+  "post_contact_obj_disp_cm": 67.8,
+  "withdraw": {
+   "t_stop": {
+    "left": 15,
+    "right": 46
+   },
+   "ease_frames": 6,
+   "stop_gap_m": 0.05,
+   "t_ref": 15
+  },
+  "reroute": {
+   "t_start": 55,
+   "t_release": 80,
+   "ramp_frames": 15,
+   "offset_m": 0.15,
+   "direction_world": [
+    -0.2005,
+    -0.22286,
+    0.95401
+   ],
+   "view_cost": 0.748,
+   "hold_frames_after_start": 26
+  },
+  "valid": true
+ }
+}

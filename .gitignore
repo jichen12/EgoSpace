@@ -1,2 +1,4 @@
 tools/sim_render/frames/
 __pycache__/
+checkpoints/
+outputs/

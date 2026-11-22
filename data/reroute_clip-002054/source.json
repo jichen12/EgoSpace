@@ -1,0 +1,63 @@
+{
+ "dataset": "HOT3D (Aria, stream 214-1)",
+ "clip": "clip-002054",
+ "frames": [
+  69,
+  149
+ ],
+ "edit": "reroute",
+ "object_views": [
+  "outputs/hot3d_preprocessed/clip-002054/curated_views/000069/000069_obj_000013_bottle_mustard_uid-261746112525368.png",
+  "outputs/hot3d_preprocessed/clip-002054/curated_views/000149/000149_obj_000013_bottle_mustard_uid-261746112525368.png",
+  "outputs/hot3d_preprocessed/clip-002054/curated_views/000113/000113_obj_000013_bottle_mustard_uid-261746112525368.png"
+ ],
+ "prompt": "grasp",
+ "paper_generation": {
+  "checkpoint": "egohoi-control-15k-2026-09-03/train_camera_obj/final.pt",
+  "seed": 23,
+  "sampling_steps": 40,
+  "guide_scale": 5.0,
+  "shift": 3.0
+ },
+ "edit_spec": {
+  "unit": "clip-002054_69-149",
+  "clip": "clip-002054",
+  "start": 69,
+  "object_uid": "261746112525368",
+  "active_hands": [
+   "right"
+  ],
+  "d_frame0_cm": {
+   "left": 34.4,
+   "right": 39.7
+  },
+  "t_contact": {
+   "left": -1,
+   "right": 23
+  },
+  "pre_contact_obj_disp_cm": 0.09,
+  "post_contact_obj_disp_cm": 47.5,
+  "withdraw": {
+   "t_stop": {
+    "right": 19
+   },
+   "ease_frames": 6,
+   "stop_gap_m": 0.05,
+   "t_ref": 19
+  },
+  "reroute": {
+   "t_start": 28,
+   "t_release": 74,
+   "ramp_frames": 15,
+   "offset_m": 0.15,
+   "direction_world": [
+    -0.49916,
+    -0.2064,
+    0.84157
+   ],
+   "view_cost": 0.327,
+   "hold_frames_after_start": 47
+  },
+  "valid": true
+ }
+}

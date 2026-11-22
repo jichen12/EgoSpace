@@ -1,0 +1,28 @@
+# Tested with Python 3.12, torch 2.8.0 + CUDA 12.8 (one 80 GB GPU for inference).
+torch>=2.4
+torchvision
+numpy<2
+scipy
+opencv-python-headless
+imageio
+imageio-ffmpeg
+pillow
+einops
+peft
+pyyaml
+tqdm
+# Wan2.1 backbone (vendored in src/wan)
+diffusers>=0.31
+transformers>=4.49
+tokenizers>=0.20.3
+accelerate>=1.1.1
+easydict
+ftfy
+sentencepiece
+flash-attn          # optional, faster attention
+# preprocessing
+smplx
+chumpy              # unpickles the official MANO .pkl files
+timm                # Depth Pro
+# optional: SAM 3 hand masks when no --hand-mask is given
+# pip install git+https://github.com/facebookresearch/sam3
